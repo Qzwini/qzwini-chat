@@ -4,4 +4,21 @@
 
 {% block content %}
 <h1>Get Started</h1>
+<form >
+    <div>
+        {{form.username(class_='form-control',
+        placeholder='Username',autocomplete='off',
+        autofocus=true)}}
+    </div>
+    <div>
+        {{form.password(class_='form-control',
+        placeholder='password',
+        autofocus=true)}}
+    </div>
+    <div>
+        {{form.confirm_pswd(class_='form-control',
+        placeholder='confirm_pswd',
+        autofocus=true)}}
+    </div>
+</form>
 {% endblock %}
