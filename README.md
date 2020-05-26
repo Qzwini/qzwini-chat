@@ -1,2 +1,2 @@
 # qzwini-chat
-#with out Des.UI
+#without Des.UI

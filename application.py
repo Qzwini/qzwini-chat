@@ -1,6 +1,6 @@
 import os
 from time import localtime, strftime
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template, redirect, url_for, flash
 from passlib.hash import  pbkdf2_sha256
 from flask_login import LoginManager, login_user, current_user, login_required,logout_user
 from flask_socketio import SocketIO, send, emit, join_room, leave_room
@@ -11,17 +11,13 @@ from models import *
 
 # Configure app
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET')
-# 'replace later'
+app.secret_key = 'replace later'
 
 # Configure database
-app.config['SQLALCHEMY_DATABASE_URI'] =os.environ.get('DATABASE_URL')
-#  'postgres://itwpbnteihaupg:1a1204f0e914139fee598a3830ccbdc5fbec7bec0bb0dcb0120c36d002b04dcd@ec2-52-44-166-58.compute-1.amazonaws.com:5432/d39ct4ok2dqku6'
+app.config['SQLALCHEMY_DATABASE_URI'] ='postgres://itwpbnteihaupg:1a1204f0e914139fee598a3830ccbdc5fbec7bec0bb0dcb0120c36d002b04dcd@ec2-52-44-166-58.compute-1.amazonaws.com:5432/d39ct4ok2dqku6'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# Initialize Flask-SocketIO 
-SocketIO = SocketIO(app)
-ROOMS = ["lounge", "news", "games", "coding"]
 
 # Configure flask login 
 login = LoginManager(app)
@@ -31,12 +27,16 @@ login.init_app(app)
 def load_user(id):
     return User.query.get(int(id))
 
+# Initialize Flask-SocketIO 
+SocketIO = SocketIO(app, manage_session=False)
 
+#  Romms in Chat
+ROOMS = ["lounge", "news", "games", "coding"]
+
+#  Ferst Loded
 @app.route("/",methods=['GET','POST'])
 def index():
-    
     reg_form = RegistrationForm()
-
     if reg_form.validate_on_submit():
         username = reg_form.username.data
         password = reg_form.password.data
@@ -44,16 +44,26 @@ def index():
         # Hash password
         hashed_pswd = pbkdf2_sha256.hash(password)
 
-     
         # Add username 
         user = User(username=username, password=hashed_pswd)
         db.session.add(user)
         db.session.commit()
+        flash('Registered successfully. Please login.', 'success')
         return redirect(url_for('login'))
-
 
     return render_template("index.html", form=reg_form)
 
+#  Chat
+@app.route("/chat", methods=['GET','POST'])
+def chat():
+    if not current_user.is_authenticated:
+        flash('Please login', 'danger')
+        return redirect(url_for('login'))
+
+    return render_template('chat.html', username=current_user.username, rooms=ROOMS)
+
+
+#  Login
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     login_form = LoginForm()
@@ -64,41 +74,45 @@ def login():
         login_user(user_object)
         return redirect(url_for('chat'))
 
-        
-
     return render_template("login.html", form=login_form)
 
-@app.route("/chat", methods=['GET','POST'])
-def chat():
-    # if not current_user.is_authenticated:
-    #     return"Pleas login befor accessing Chat!"
 
-    return render_template('chat.html', username=current_user.username, rooms=ROOMS)
 
+# LogOut
 @app.route("/logout", methods=['GET'])
 def logout():
+    # Logout user
     logout_user()
-    return "Logged out using flask-login!"
+    flash('You have logged out successfully', 'success')
+    return redirect(url_for('login'))
 
+
+# Message
 @SocketIO.on('message')
 def message(data):
     send({'msg': data['msg'], 'username':data['username'], 'time_stamp': strftime('%b-%d %I:%M%p', localtime())}, room=data['room'])
 
     # emit('some-event', 'this is a custom message')
 
+#  JoinRoom
 @SocketIO.on('join')
 def join(data):
     join_room(data['room'])
     send({'msg': data['username'] + " has joined the " + data['room'] + " room. "}, room=data['room'])
 
-
+# LeaveRoom
 @SocketIO.on('leave')
 def leave(data):
     leave_room(data['room'])
     send({'msg': data['username'] + " has left the " + data['room'] + " room. "}, room=data['room'])
 
+#  404
+@app.errorhandler(404)
+def page_not_found(e):
+    # note that we set the 404 status explicitly
+    return render_template('404.html'), 404
 
 
 if __name__ == '__main__':
  
-    app.run()
+    SocketIO.run(app, debug=True)
