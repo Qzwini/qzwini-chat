@@ -1,2 +1,2 @@
 # qzwini-chat
-#fuck_u
+#with out Des.UI
