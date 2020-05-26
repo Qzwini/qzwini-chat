@@ -18,6 +18,7 @@ db = SQLAlchemy(app)
 
 # Initialize Flask-SocketIO 
 SocketIO = SocketIO(app)
+ROOMS = ["lounge", "news", "games", "coding"]
 
 # Configure flask login 
 login = LoginManager(app)
@@ -69,7 +70,7 @@ def chat():
     # if not current_user.is_authenticated:
     #     return"Pleas login befor accessing Chat!"
 
-    return render_template('chat.html', username=current_user.username)
+    return render_template('chat.html', username=current_user.username, rooms=ROOMS)
 
 @app.route("/logout", methods=['GET'])
 def logout():
@@ -78,21 +79,20 @@ def logout():
 
 @SocketIO.on('message')
 def message(data):
-    print("\n\n{data}\n\n")
-    send({'msg': data['msg'], 'username':data['username'], 'time_stamp': strftime('%b-%d %I:%M%p', localtime())})
+    send({'msg': data['msg'], 'username':data['username'], 'time_stamp': strftime('%b-%d %I:%M%p', localtime())}, room=data['room'])
 
     # emit('some-event', 'this is a custom message')
 
 @SocketIO.on('join')
 def join(data):
     join_room(data['room'])
-    send({'msg': data['username'] + "has joined the " + data['room'] + " room. "}, room=data['room'])
+    send({'msg': data['username'] + " has joined the " + data['room'] + " room. "}, room=data['room'])
 
 
 @SocketIO.on('leave')
 def leave(data):
     leave_room(data['room'])
-    send({'msg': data['username'] + "has left the " + data['room'] + " room. "}, room=data['room'])
+    send({'msg': data['username'] + " has left the " + data['room'] + " room. "}, room=data['room'])
 
 
 

@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
+
 <head>
     <meta charset="UTF-8">
-   
+
     <title>Section </title>
 </head>
+
 <body>
     <!-- Navigation bar -->
     <nav>
@@ -12,8 +14,13 @@
     </nav>
 
     <div id="main-section">
-        <!-- Room election -->
+        <!-- Room selection -->
         <nav id="sidebar">
+            <h4>ROOMS</h4>
+            {% for room in rooms %}
+            <p class="select-room">{{ room|title }}</p>
+            {% endfor %}
+
 
         </nav>
         <!-- Message area -->
@@ -24,7 +31,7 @@
             </div>
             <!-- Input message  -->
             <div id="input-area">
-                <input type="text" id="user_message" placeholder="type here..." autocomplete="off" >
+                <input type="text" id="user_message" placeholder="type here..." autocomplete="off">
                 <button type="button" id="send_message">SEND</button>
             </div>
 
@@ -34,8 +41,12 @@
 
     <!-- Get username  -->
     <script type="text/javascript">
-    const username = '{{ username }}';
+        const username = '{{ username }}';
     </script>
+
+    <!-- Custom chat JS -->
+    <script src="{{ url_for('static', filename='scripts/chat_page.js') }}"></script>
+
 
     <!-- SocketIO JS  -->
     <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
@@ -44,4 +55,5 @@
     <script src="{{ url_for('static', filename='scripts/socketio.js') }}"></script>
 
 </body>
+
 </html>
