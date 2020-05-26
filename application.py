@@ -11,13 +11,18 @@ from models import *
 
 # Configure app
 app = Flask(__name__)
-app.secret_key = 'replace later'
+app.secret_key = os.environ.get('SECRET')
+# 'replace later'
 
 # Configure database
-app.config['SQLALCHEMY_DATABASE_URI'] ='postgres://itwpbnteihaupg:1a1204f0e914139fee598a3830ccbdc5fbec7bec0bb0dcb0120c36d002b04dcd@ec2-52-44-166-58.compute-1.amazonaws.com:5432/d39ct4ok2dqku6'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_DATABASE_URI'] =os.environ.get('DATABASE_URL')
+#  'postgres://itwpbnteihaupg:1a1204f0e914139fee598a3830ccbdc5fbec7bec0bb0dcb0120c36d002b04dcd@ec2-52-44-166-58.compute-1.amazonaws.com:5432/d39ct4ok2dqku6'
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+# Initialize Flask-SocketIO 
+SocketIO = SocketIO(app)
+ROOMS = ["lounge", "news", "games", "coding"]
 
 # Configure flask login 
 login = LoginManager(app)
@@ -26,12 +31,6 @@ login.init_app(app)
 @login.user_loader
 def load_user(id):
     return User.query.get(int(id))
-
-# Initialize Flask-SocketIO 
-SocketIO = SocketIO(app, manage_session=False)
-
-#  Romms in Chat
-ROOMS = ["lounge", "news", "games", "coding"]
 
 #  Ferst Loded
 @app.route("/",methods=['GET','POST'])
@@ -115,4 +114,4 @@ def page_not_found(e):
 
 if __name__ == '__main__':
  
-    SocketIO.run(app, debug=True)
+    app.run(app)
